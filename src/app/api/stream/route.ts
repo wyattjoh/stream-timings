@@ -45,10 +45,34 @@ export async function POST(req: Request): Promise<Response> {
 
   const reporter = new Reporter();
 
-  // Start the underling fetch to the given URL.
-  const res = await fetch(url);
-  if (!res.body) {
-    throw new Error("No body found in response");
+  let res: Response;
+  try {
+    // Start the underling fetch to the given URL.
+    res = await fetch(url);
+    if (!res.body) {
+      throw new Error("No body found in response");
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      return new Response(
+        JSON.stringify({
+          type: "error",
+          delta: 0,
+          timing: 0,
+          data: {
+            message: err.message,
+          },
+        } satisfies StreamTimingReport),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    throw err;
   }
 
   // Create the transform stream that will append the timing data to the

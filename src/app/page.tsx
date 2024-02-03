@@ -185,7 +185,7 @@ function ReportSummary({ reports }: { reports: StreamTimingReport[] }) {
   }, [reports]);
 
   return (
-    <div className="mb-4 grid md:grid-cols-3 bg-gray-600 text-gray-200 p-3 rounded-md text-md">
+    <div className="mb-4 grid md:grid-cols-3 bg-gray-600 text-gray-200 p-3 rounded-md text-sm">
       <div>
         <span className="text-indigo-300">End of Headers</span>:{" "}
         {summary.headers !== null ? (
@@ -214,11 +214,12 @@ const ReportName: Record<StreamTimingReport["type"], string> = {
   start: "Headers",
   chunk: "Data",
   end: "Request End",
+  error: "Error",
 };
 
 function Report({ report }: { report: StreamTimingReport }) {
   return (
-    <div className="mb-2 border-y md:border md:rounded-md p-2 space-y-2 drop-shadow-md">
+    <div className="mb-2 border-y md:border md:rounded-md p-2 space-y-2 md:shadow-sm">
       <div className="grid md:grid-cols-3">
         <span>{ReportName[report.type]}</span>
         <span>
@@ -242,7 +243,10 @@ function ReportDetail({ report }: { report: StreamTimingReport }) {
     return null;
   }
 
-  const className = "text-xs text-gray-200 bg-gray-600 p-2 rounded-md";
+  const className =
+    report.type !== "error"
+      ? "text-xs text-gray-200 bg-gray-600 p-2 rounded-md"
+      : "text-sm text-white bg-red-600 p-2 rounded-md";
 
   if (report.type === "start") {
     return (
@@ -270,6 +274,10 @@ function ReportDetail({ report }: { report: StreamTimingReport }) {
         {report.data.chunk}
       </pre>
     );
+  }
+
+  if (report.type === "error") {
+    return <pre className={className}>Error: {report.data.message}</pre>;
   }
 
   return null;

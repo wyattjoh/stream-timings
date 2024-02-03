@@ -18,10 +18,18 @@ type EndStreamReport = {
   type: "end";
 };
 
+export type ErrorStreamReport = {
+  type: "error";
+  data: {
+    message: string;
+  };
+};
+
 export type StreamReport =
   | StartStreamReport
   | ChunkStreamReport
-  | EndStreamReport;
+  | EndStreamReport
+  | ErrorStreamReport;
 
 export type StreamTimingReport = StreamReport & {
   timing: number;
