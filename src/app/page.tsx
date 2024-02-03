@@ -101,32 +101,43 @@ export default function Page() {
   return (
     <div className="flex flex-col items-center my-6 font-mono">
       <div className="max-w-[800px] w-full">
-        <h1 className="text-3xl font-semibold mb-4">Stream Timings Profiler</h1>
-        <p className="mb-4">
-          This tool generates stream timing profiles for a given URL. It does
-          this by making a request to the URL and then parsing the stream
-          timings from the server.
-        </p>
-        <form className="flex flex-col mb-6" onSubmit={onSubmit}>
-          <input
-            type="text"
-            placeholder="URL"
-            name="url"
-            className="border mb-2 p-2 text-sm"
-            onChange={onChange}
-          />
-          <div>
+        <div className="p-2">
+          <h1 className="text-3xl font-semibold">Stream Timings Profiler</h1>
+          <div className="mb-4">
+            <a
+              href="https://github.com/wyattjoh/stream-timings"
+              className="underline text-sm text-gray-600"
+            >
+              https://github.com/wyattjoh/stream-timings
+            </a>
+          </div>
+          <p className="mb-4">
+            This tool generates stream timing profiles for a given URL. It does
+            this by making a request to the URL and then parsing the stream
+            timings from the server.
+          </p>
+          <form
+            className="flex mb-6 space-y-2 md:space-y-0 md:space-x-2 md:items-baseline flex-col md:flex-row"
+            onSubmit={onSubmit}
+          >
+            <input
+              type="text"
+              placeholder="URL"
+              name="url"
+              className="border p-2 text-sm rounded-md flex-grow"
+              onChange={onChange}
+            />
             <button
               type="submit"
-              className="px-3 py-1 font-semibold leading-6 text-sm shadow rounded-md text-white bg-indigo-500 hover:bg-indigo-400 aria-disabled:bg-gray-400 aria-disabled:cursor-not-allowed"
+              className="px-3 py-2 font-semibold text-sm shadow rounded-md text-white bg-indigo-500 hover:bg-indigo-400 aria-disabled:bg-gray-400 aria-disabled:cursor-not-allowed"
               aria-disabled={loading}
             >
               {loading ? "Profiling..." : "Profile URL"}
             </button>
-          </div>
-        </form>
-        {error && <div className="text-red-500 mb-4">{error}</div>}
-        {reports.length > 0 && <ReportSummary reports={reports} />}
+          </form>
+          {error && <div className="text-red-500 mb-4">{error}</div>}
+          {reports.length > 0 && <ReportSummary reports={reports} />}
+        </div>
         <div>
           {reports.map((report, index) => {
             return <Report key={index} report={report} />;
@@ -142,6 +153,10 @@ type Summary = {
   chunks: number | null;
   total: number | null;
 };
+
+function Loading() {
+  return <span className="animate-pulse">Loading...</span>;
+}
 
 function ReportSummary({ reports }: { reports: StreamTimingReport[] }) {
   const summary = useMemo(() => {
@@ -170,24 +185,26 @@ function ReportSummary({ reports }: { reports: StreamTimingReport[] }) {
   }, [reports]);
 
   return (
-    <div className="mb-4 grid grid-cols-3 bg-gray-600 text-gray-200 p-3 rounded-md text-md">
+    <div className="mb-4 grid md:grid-cols-3 bg-gray-600 text-gray-200 p-3 rounded-md text-md">
       <div>
         <span className="text-indigo-300">End of Headers</span>:{" "}
-        {summary.headers !== null
-          ? summary.headers.toFixed(2) + "ms"
-          : "Loading..."}
+        {summary.headers !== null ? (
+          summary.headers.toFixed(2) + "ms"
+        ) : (
+          <Loading />
+        )}
       </div>
       <div>
         <span className="text-indigo-300">Chunk Count</span>:{" "}
-        {summary.chunks !== null && summary.total !== null
-          ? summary.chunks
-          : "Loading..."}
+        {summary.chunks !== null && summary.total !== null ? (
+          summary.chunks
+        ) : (
+          <Loading />
+        )}
       </div>
       <div>
         <span className="text-indigo-300">Total Time</span>:{" "}
-        {summary.total !== null
-          ? summary.total.toFixed(2) + "ms"
-          : "Loading..."}
+        {summary.total !== null ? summary.total.toFixed(2) + "ms" : <Loading />}
       </div>
     </div>
   );
@@ -201,8 +218,8 @@ const ReportName: Record<StreamTimingReport["type"], string> = {
 
 function Report({ report }: { report: StreamTimingReport }) {
   return (
-    <div className="mb-2 border rounded-md p-2 space-y-2 drop-shadow-md">
-      <div className="grid grid-cols-3">
+    <div className="mb-2 border-y md:border md:rounded-md p-2 space-y-2 drop-shadow-md">
+      <div className="grid md:grid-cols-3">
         <span>{ReportName[report.type]}</span>
         <span>
           <span className="text-xs lowercase text-gray-500">Since Start</span>:{" "}
@@ -225,7 +242,7 @@ function ReportDetail({ report }: { report: StreamTimingReport }) {
     return null;
   }
 
-  const className = "text-xs text-gray-200 bg-gray-600 p-2";
+  const className = "text-xs text-gray-200 bg-gray-600 p-2 rounded-md";
 
   if (report.type === "start") {
     return (
