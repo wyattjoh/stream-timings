@@ -20,7 +20,7 @@ type Props = {
 export default function RootLayout({ children }: Props) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="dark:bg-slate-800 dark:text-white">{children}</body>
     </html>
   );
 }

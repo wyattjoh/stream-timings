@@ -124,7 +124,7 @@ export default function Page() {
               type="url"
               placeholder="URL"
               name="url"
-              className="border p-2 text-sm rounded-md flex-grow"
+              className="border p-2 text-sm rounded-md flex-grow dark:text-slate-800"
               onChange={onChange}
             />
             <button
@@ -219,7 +219,7 @@ const ReportName: Record<StreamTimingReport["type"], string> = {
 
 function Report({ report }: { report: StreamTimingReport }) {
   return (
-    <div className="mb-2 border-y md:border md:rounded-md p-2 space-y-2 md:shadow-sm">
+    <div className="mb-2 border-y md:border dark:md:border-slate-600 dark:bg-slate-700 md:rounded-md p-2 space-y-2 md:shadow-sm">
       <div className="grid md:grid-cols-3">
         <span>{ReportName[report.type]}</span>
         <span>
