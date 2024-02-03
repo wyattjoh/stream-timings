@@ -1,113 +1,259 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import clsx from "clsx";
+import type { StreamTimingReport } from "@/types";
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+function parseChunk(chunk: string): StreamTimingReport[] {
+  // Split the chunk by newline, we may be getting multiple JSON
+  // objects.
+  const chunks = chunk
+    .split("\n")
+    .map((c) => c.trim())
+    .filter((c) => c.length > 0);
+
+  const reports: StreamTimingReport[] = [];
+
+  for (const chunk of chunks) {
+    try {
+      reports.push(JSON.parse(chunk));
+    } catch (err) {
+      console.log("Could not parse JSON", chunk);
+      console.error(err);
+    }
+  }
+
+  return reports;
+}
+
+export default function Page() {
+  const [error, setError] = useState<string | null>(null);
+  const [url, setURL] = useState<string | null>(null);
+  const [reports, setReports] = useState<StreamTimingReport[]>([]);
+  const ref = useRef<AbortController | null>(null);
+  const [loading, setLoading] = useState(false);
+  const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setURL(e.target.value);
+  }, []);
+
+  const onSubmit = useCallback(
+    (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (!url) return;
+
+      try {
+        new URL(url);
+      } catch (err) {
+        setError("Invalid URL: " + url);
+        return;
+      }
+
+      setError(null);
+
+      // Abort the previous request if it exists.
+      if (ref.current) ref.current.abort();
+      ref.current = new AbortController();
+
+      // Reset the elements.
+      setReports([]);
+      setLoading(true);
+
+      fetch("/api/stream", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({ url }),
+        signal: ref.current.signal,
+      })
+        .then((res) => {
+          if (!res.body) return;
+
+          const decoder = new TextDecoderStream();
+          const writer = new WritableStream<string>({
+            write(chunk) {
+              const parsed = parseChunk(chunk);
+              if (parsed.length === 0) return;
+
+              setReports((prev) => [...prev, ...parsed]);
+            },
+          });
+
+          return res.body.pipeThrough(decoder).pipeTo(writer);
+        })
+        .then(() => {
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    },
+    [url]
+  );
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
+    <div className="flex flex-col items-center my-6 font-mono">
+      <div className="max-w-[800px] w-full">
+        <h1 className="text-3xl font-semibold mb-4">Stream Timings Profiler</h1>
+        <p className="mb-4">
+          This tool generates stream timing profiles for a given URL. It does
+          this by making a request to the URL and then parsing the stream
+          timings from the server.
         </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+        <form className="flex flex-col mb-6" onSubmit={onSubmit}>
+          <input
+            type="text"
+            placeholder="URL"
+            name="url"
+            className="border mb-2 p-2 text-sm"
+            onChange={onChange}
+          />
+          <div>
+            <button
+              type="submit"
+              className="px-3 py-1 font-semibold leading-6 text-sm shadow rounded-md text-white bg-indigo-500 hover:bg-indigo-400 aria-disabled:bg-gray-400 aria-disabled:cursor-not-allowed"
+              aria-disabled={loading}
+            >
+              {loading ? "Profiling..." : "Profile URL"}
+            </button>
+          </div>
+        </form>
+        {error && <div className="text-red-500 mb-4">{error}</div>}
+        {reports.length > 0 && <ReportSummary reports={reports} />}
+        <div>
+          {reports.map((report, index) => {
+            return <Report key={index} report={report} />;
+          })}
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
+}
+
+type Summary = {
+  headers: number | null;
+  chunks: number | null;
+  total: number | null;
+};
+
+function ReportSummary({ reports }: { reports: StreamTimingReport[] }) {
+  const summary = useMemo(() => {
+    return reports.reduce<Summary>(
+      (acc, report) => {
+        switch (report.type) {
+          case "start":
+            acc.headers = report.timing;
+            break;
+          case "chunk":
+            acc.chunks = (acc.chunks || 0) + 1;
+            break;
+          case "end":
+            acc.total = report.timing;
+            break;
+        }
+
+        return acc;
+      },
+      {
+        headers: null,
+        chunks: null,
+        total: null,
+      }
+    );
+  }, [reports]);
+
+  return (
+    <div className="mb-4 grid grid-cols-3 bg-gray-600 text-gray-200 p-3 rounded-md text-md">
+      <div>
+        <span className="text-indigo-300">End of Headers</span>:{" "}
+        {summary.headers !== null
+          ? summary.headers.toFixed(2) + "ms"
+          : "Loading..."}
+      </div>
+      <div>
+        <span className="text-indigo-300">Chunk Count</span>:{" "}
+        {summary.chunks !== null && summary.total !== null
+          ? summary.chunks
+          : "Loading..."}
+      </div>
+      <div>
+        <span className="text-indigo-300">Total Time</span>:{" "}
+        {summary.total !== null
+          ? summary.total.toFixed(2) + "ms"
+          : "Loading..."}
+      </div>
+    </div>
+  );
+}
+
+const ReportName: Record<StreamTimingReport["type"], string> = {
+  start: "Headers",
+  chunk: "Data",
+  end: "Request End",
+};
+
+function Report({ report }: { report: StreamTimingReport }) {
+  return (
+    <div className="mb-2 border rounded-md p-2 space-y-2 drop-shadow-md">
+      <div className="grid grid-cols-3">
+        <span>{ReportName[report.type]}</span>
+        <span>
+          <span className="text-xs lowercase text-gray-500">Since Start</span>:{" "}
+          {report.timing.toFixed(2)}ms
+        </span>
+        <span>
+          <span className="text-xs lowercase text-gray-500">
+            Since Previous
+          </span>
+          : {report.delta.toFixed(2)}ms
+        </span>
+      </div>
+      <ReportDetail report={report} />
+    </div>
+  );
+}
+
+function ReportDetail({ report }: { report: StreamTimingReport }) {
+  if (report.type === "end") {
+    return null;
+  }
+
+  const className = "text-xs text-gray-200 bg-gray-600 p-2";
+
+  if (report.type === "start") {
+    return (
+      <div className={className}>
+        <div className="text-indigo-300">
+          HTTP/1.1 {report.data.status} {report.data.statusText}
+        </div>
+        <ul>
+          {Object.entries(report.data.headers).map(([key, value]) => {
+            return (
+              <li key={key}>
+                <span className="capitalize text-indigo-300">{key}</span>:{" "}
+                {value}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
+
+  if (report.type === "chunk") {
+    return (
+      <pre className={clsx(className, "whitespace-break-spaces break-words")}>
+        {report.data.chunk}
+      </pre>
+    );
+  }
+
+  return null;
 }
