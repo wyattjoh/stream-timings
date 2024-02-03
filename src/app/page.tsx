@@ -121,7 +121,7 @@ export default function Page() {
             onSubmit={onSubmit}
           >
             <input
-              type="text"
+              type="url"
               placeholder="URL"
               name="url"
               className="border p-2 text-sm rounded-md flex-grow"
