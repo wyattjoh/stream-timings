@@ -99,25 +99,27 @@ export default function Page() {
   );
 
   return (
-    <div className="flex flex-col items-center my-6 font-mono">
-      <div className="max-w-[800px] w-full">
-        <div className="p-2">
-          <h1 className="text-3xl font-semibold">Stream Timings Profiler</h1>
-          <div className="mb-4">
-            <a
-              href="https://github.com/wyattjoh/stream-timings"
-              className="underline text-sm text-gray-600"
-            >
-              https://github.com/wyattjoh/stream-timings
-            </a>
+    <div className="my-6 font-mono grid grid-cols-6">
+      <div className="max-w-[800px] w-full col-start-2 col-span-4">
+        <div className="md:p-2 space-y-4">
+          <div>
+            <h1 className="text-3xl font-semibold">Stream Timings Profiler</h1>
+            <div>
+              <a
+                href="https://github.com/wyattjoh/stream-timings"
+                className="underline text-sm text-gray-600"
+              >
+                https://github.com/wyattjoh/stream-timings
+              </a>
+            </div>
           </div>
-          <p className="mb-4">
+          <p>
             This tool generates stream timing profiles for a given URL. It does
             this by making a request to the URL and then parsing the stream
             timings from the server.
           </p>
           <form
-            className="flex mb-6 space-y-2 md:space-y-0 md:space-x-2 md:items-baseline flex-col md:flex-row"
+            className="flex space-y-2 md:space-y-0 md:space-x-2 md:items-baseline flex-col md:flex-row"
             onSubmit={onSubmit}
           >
             <input
@@ -135,7 +137,7 @@ export default function Page() {
               {loading ? "Profiling..." : "Profile URL"}
             </button>
           </form>
-          {error && <div className="text-red-500 mb-4">{error}</div>}
+          {error && <div className="text-red-500">{error}</div>}
           {reports.length > 0 && <ReportSummary reports={reports} />}
         </div>
         <div>
