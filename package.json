@@ -4,7 +4,11 @@
   "private": true,
   "author": "Wyatt Johnson",
   "license": "ISC",
+  "scripts": {
+    "build": "turbo build"
+  },
   "devDependencies": {
-    "syncpack": "^12.3.0"
+    "syncpack": "^12.3.0",
+    "turbo": "^1.12.3"
   }
 }
