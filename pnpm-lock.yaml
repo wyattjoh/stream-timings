@@ -64,6 +64,16 @@ importers:
         specifier: ^5
         version: 5.3.3
 
+  apps/stream-timings-fn:
+    dependencies:
+      '@wyattjoh/stream-utils':
+        specifier: 0.0.1
+        version: link:../../packages/stream-utils
+    devDependencies:
+      tsup:
+        specifier: ^8.0.1
+        version: 8.0.1(typescript@5.3.3)
+
   packages/stream-utils:
     devDependencies:
       '@types/node':
