@@ -1,0 +1,23 @@
+{
+  "name": "@wyattjoh/stream-utils",
+  "version": "0.0.1",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsup": "^8.0.1",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "versionGroups": [
+    {
+      "packages": ["**"],
+      "dependencies": [
+        "react",
+        "react-dom",
+        "typescript",
+        "@types/node",
+        "@types/react",
+        "zod"
+      ]
+    },
+    {
+      "packages": ["**"],
+      "dependencies": ["next"],
+      "pinVersion": "14.1.1-canary.45"
+    }
+  ]
+}

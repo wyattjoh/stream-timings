@@ -1,9 +1,4 @@
 import { StreamReport, StreamTimingReport } from "@/types";
-import { z } from "zod";
-
-const schema = z.object({
-  url: z.string().min(1).url(),
-});
 
 class Reporter {
   static now(): number {
@@ -39,40 +34,15 @@ class Reporter {
   }
 }
 
-export async function POST(req: Request): Promise<Response> {
-  // Parse the url from the POST body.
-  const { url } = schema.parse(await req.json());
-
+export async function measure(
+  url: string
+): Promise<ReadableStream<Uint8Array>> {
   const reporter = new Reporter();
 
-  let res: Response;
-  try {
-    // Start the underling fetch to the given URL.
-    res = await fetch(url);
-    if (!res.body) {
-      throw new Error("No body found in response");
-    }
-  } catch (err) {
-    if (err instanceof Error) {
-      return new Response(
-        JSON.stringify({
-          type: "error",
-          delta: 0,
-          timing: 0,
-          data: {
-            message: err.message,
-          },
-        } satisfies StreamTimingReport),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
-    throw err;
+  // Start the underling fetch to the given URL.
+  const res = await fetch(url);
+  if (!res.body) {
+    throw new Error("No body found in response");
   }
 
   // Create the transform stream that will append the timing data to the
@@ -103,10 +73,8 @@ export async function POST(req: Request): Promise<Response> {
   });
 
   // Pipe the response body through the transform stream and return the result.
-  const stream = res.body
+  return res.body
     .pipeThrough(decoder)
     .pipeThrough(transformer)
     .pipeThrough(encoder);
-
-  return new Response(stream, {});
 }

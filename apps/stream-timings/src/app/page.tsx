@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import type { StreamTimingReport } from "@/types";
+import type { StreamTimingReport } from "@wyattjoh/stream-utils";
 import {
   ChangeEvent,
   FormEvent,
