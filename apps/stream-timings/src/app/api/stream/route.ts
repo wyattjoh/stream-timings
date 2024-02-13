@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import {
   encode,
   measure,
@@ -11,13 +10,14 @@ const schema = z.object({
 });
 
 export async function POST(req: Request): Promise<Response> {
-  // Parse the url from the POST body.
-  const { url } = schema.parse(await req.json());
-
   try {
+    const { url } = schema.parse(await req.json());
+
+    // Measure the stream timing for the given URL.
     const stream = await measure(url);
 
     return new Response(stream, {
+      status: 200,
       headers: {
         "Content-Type": "application/json",
       },
@@ -25,40 +25,20 @@ export async function POST(req: Request): Promise<Response> {
   } catch (err) {
     console.error("Error fetching stream", err);
 
-    if (err instanceof Error) {
-      return new Response(
-        encode({
-          type: "error",
-          delta: 0,
-          timing: 0,
-          data: {
-            message: err.message,
-          },
-        } satisfies StreamTimingReport),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+    const message = err instanceof Error ? err.message : "Unknown error";
 
-    return new Response(
-      encode({
-        type: "error",
-        delta: 0,
-        timing: 0,
-        data: {
-          message: "Unknown error",
-        },
-      } satisfies StreamTimingReport),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const report: StreamTimingReport = {
+      type: "error",
+      delta: 0,
+      timing: 0,
+      data: { message },
+    };
+
+    return new Response(encode(report), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   }
 }
