@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import type { StreamTimingReport } from "@wyattjoh/stream-utils";
+import { type StreamTimingReport, decode } from "@wyattjoh/stream-utils";
 import {
   ChangeEvent,
   FormEvent,
@@ -10,28 +10,6 @@ import {
   useRef,
   useState,
 } from "react";
-
-function parseChunk(chunk: string): StreamTimingReport[] {
-  // Split the chunk by newline, we may be getting multiple JSON
-  // objects.
-  const chunks = chunk
-    .split("\n")
-    .map((c) => c.trim())
-    .filter((c) => c.length > 0);
-
-  const reports: StreamTimingReport[] = [];
-
-  for (const chunk of chunks) {
-    try {
-      reports.push(JSON.parse(chunk));
-    } catch (err) {
-      console.log("Could not parse JSON", chunk);
-      console.error(err);
-    }
-  }
-
-  return reports;
-}
 
 export default function Page() {
   const [error, setError] = useState<string | null>(null);
@@ -44,10 +22,11 @@ export default function Page() {
   }, []);
 
   const onSubmit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
+    async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (!url) return;
 
+      // Validate the URL.
+      if (!url) return;
       try {
         new URL(url);
       } catch (err) {
@@ -59,41 +38,56 @@ export default function Page() {
 
       // Abort the previous request if it exists.
       if (ref.current) ref.current.abort();
-      ref.current = new AbortController();
+      const controller = new AbortController();
+      ref.current = controller;
 
       // Reset the elements.
       setReports([]);
       setLoading(true);
 
-      fetch("/api/stream", {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({ url }),
-        signal: ref.current.signal,
-      })
-        .then((res) => {
-          if (!res.body) return;
-
-          const decoder = new TextDecoderStream();
-          const writer = new WritableStream<string>({
-            write(chunk) {
-              const parsed = parseChunk(chunk);
-              if (parsed.length === 0) return;
-
-              setReports((prev) => [...prev, ...parsed]);
-            },
-          });
-
-          return res.body.pipeThrough(decoder).pipeTo(writer);
-        })
-        .then(() => {
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
+      try {
+        const res = await fetch("/api/stream", {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+          body: JSON.stringify({ url }),
+          signal: controller.signal,
         });
+
+        if (!res.body) return;
+
+        const decoder = new TextDecoderStream();
+        const writer = new WritableStream<string>({
+          write(chunk) {
+            const parsed = decode(chunk);
+            if (parsed.length === 0) return;
+
+            setReports((prev) => [...prev, ...parsed]);
+          },
+        });
+
+        await res.body.pipeThrough(decoder).pipeTo(writer);
+      } catch (err) {
+        console.error(err);
+
+        const message = err instanceof Error ? err.message : null;
+        setError(
+          `An error occurred while profiling the URL.${
+            message ? " " + message : ""
+          }`
+        );
+      }
+
+      // If the controller that was used to make the request is the same
+      // as the one that is currently stored in the ref, then we can
+      // clear it out as we're done with it.
+      if (ref.current === controller) {
+        ref.current = null;
+      }
+
+      // We're done loading.
+      setLoading(false);
     },
     [url]
   );

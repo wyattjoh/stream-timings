@@ -5,7 +5,8 @@
   "author": "Wyatt Johnson",
   "license": "ISC",
   "scripts": {
-    "build": "turbo build"
+    "build": "turbo build",
+    "dev": "turbo dev"
   },
   "devDependencies": {
     "next": "14.1.1-canary.51",

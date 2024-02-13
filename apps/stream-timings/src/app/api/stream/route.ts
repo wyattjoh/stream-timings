@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { measure, type StreamTimingReport } from "@wyattjoh/stream-utils";
+
+import {
+  encode,
+  measure,
+  type StreamTimingReport,
+} from "@wyattjoh/stream-utils";
 
 const schema = z.object({
   url: z.string().min(1).url(),
@@ -22,7 +27,7 @@ export async function POST(req: Request): Promise<Response> {
 
     if (err instanceof Error) {
       return new Response(
-        JSON.stringify({
+        encode({
           type: "error",
           delta: 0,
           timing: 0,
@@ -40,7 +45,7 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     return new Response(
-      JSON.stringify({
+      encode({
         type: "error",
         delta: 0,
         timing: 0,

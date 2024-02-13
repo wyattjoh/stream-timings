@@ -2,7 +2,8 @@
   "name": "@wyattjoh/stream-utils",
   "version": "0.0.1",
   "description": "",
-  "main": "./dist/index.js",
+  "main": "./src/index.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch"

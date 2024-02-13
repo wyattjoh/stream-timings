@@ -2,19 +2,17 @@
   "versionGroups": [
     {
       "packages": ["**"],
-      "dependencies": [
-        "react",
-        "react-dom",
-        "typescript",
-        "@types/node",
-        "@types/react",
-        "zod"
-      ]
+      "dependencyTypes": ["dependencies"]
     },
     {
       "packages": ["**"],
       "dependencies": ["next"],
       "pinVersion": "14.1.1-canary.51"
+    },
+    {
+      "packages": ["**"],
+      "dependencies": ["@wyattjoh/stream-utils"],
+      "isIgnored": true
     }
   ]
 }

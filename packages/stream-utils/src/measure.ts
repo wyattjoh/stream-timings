@@ -1,4 +1,5 @@
 import { StreamReport, StreamTimingReport } from "@/types";
+import { encode } from "./encoding";
 
 class Reporter {
   static now(): number {
@@ -22,15 +23,11 @@ class Reporter {
 
     this.last = now;
 
-    return (
-      JSON.stringify({
-        timing,
-        delta,
-        ...report,
-      } satisfies StreamTimingReport) +
-      // Add a newline to separate each report (newline delimited JSON).
-      "\n"
-    );
+    return encode({
+      timing,
+      delta,
+      ...report,
+    } satisfies StreamTimingReport);
   }
 }
 

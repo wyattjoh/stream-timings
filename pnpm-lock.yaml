@@ -21,7 +21,7 @@ importers:
   apps/stream-timings:
     dependencies:
       '@wyattjoh/stream-utils':
-        specifier: 0.0.1
+        specifier: workspace:*
         version: link:../../packages/stream-utils
       clsx:
         specifier: ^2.1.0

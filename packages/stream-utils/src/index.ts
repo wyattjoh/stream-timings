@@ -1,2 +1,3 @@
-export { measure } from "./measure";
+export * from "./measure";
+export * from "./encoding";
 export type * from "./types";
