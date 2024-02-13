@@ -14,7 +14,7 @@
     {
       "packages": ["**"],
       "dependencies": ["next"],
-      "pinVersion": "14.1.1-canary.45"
+      "pinVersion": "14.1.1-canary.51"
     }
   ]
 }
