@@ -2,15 +2,11 @@ import { StreamReport, StreamTimingReport } from "@/types";
 import { encode } from "./encoding";
 
 class Reporter {
-  static now(): number {
-    return performance.now();
-  }
-
-  private readonly start: number = Reporter.now();
+  private readonly start: number = performance.now();
   private last: number | null = null;
 
   public encode(report: StreamReport): string {
-    const now = Reporter.now();
+    const now = performance.now();
 
     const timing = now - this.start;
 
