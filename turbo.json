@@ -3,6 +3,9 @@
     "build": {
       "dependsOn": ["^build"]
     },
-    "dev": {}
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false
+    }
   }
 }
