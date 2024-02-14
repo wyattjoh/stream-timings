@@ -28,21 +28,17 @@ class Reporter {
 }
 
 type MeasureOptions = {
-  compress?: "gzip" | "br";
+  headers?: Record<string, string>;
 };
 
 export async function measure(
   url: string,
-  options?: MeasureOptions
+  options: MeasureOptions
 ): Promise<ReadableStream<Uint8Array>> {
   const reporter = new Reporter();
 
   const init: RequestInit = {
-    headers: {
-      // If the user has requested that the response be compressed, set the
-      // Accept-Encoding header to the given value.
-      "Accept-Encoding": options?.compress ? options.compress : "identity",
-    },
+    headers: options.headers,
   };
 
   // Start the underling fetch to the given URL.

@@ -1,33 +1,28 @@
 "use client";
 
-import type { RequestBody } from "./api/stream/route";
 import clsx from "clsx";
 import { type StreamTimingReport, decode } from "@wyattjoh/stream-utils";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { type Schema, schema } from "@/lib/shared";
 
-const schema = z.object({
-  url: z.string().min(1).url(),
-  compress: z.enum(["gzip", "br", ""]),
-});
-
-type FormFields = z.infer<typeof schema>;
+const defaultValues: Schema = {
+  url: "https://www.vercel.com",
+  compress: "*",
+};
 
 export default function Page() {
-  const form = useForm<FormFields>({
+  const form = useForm<Schema>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      url: "",
-    },
+    defaultValues,
   });
   const [error, setError] = useState<string | null>(null);
   const [reports, setReports] = useState<StreamTimingReport[]>([]);
   const [loading, setLoading] = useState(false);
   const ref = useRef<AbortController | null>(null);
 
-  const onSubmit = useCallback(async ({ url, compress }: FormFields) => {
+  const onSubmit = useCallback(async ({ url, compress }: Schema) => {
     setError(null);
 
     // Abort the previous request if it exists.
@@ -39,19 +34,16 @@ export default function Page() {
     setReports([]);
     setLoading(true);
 
-    // Compile the body of the request.
-    const body: RequestBody = { url };
-    if (compress) {
-      body.compress = compress;
-    }
-
     try {
       const res = await fetch("/api/stream", {
         headers: {
           "Content-Type": "application/json",
         },
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify(
+          // Compile the body of the request.
+          { url, compress } satisfies Schema
+        ),
         signal: controller.signal,
       });
 
@@ -98,7 +90,7 @@ export default function Page() {
           <div>
             <a
               href="https://github.com/wyattjoh/stream-timings"
-              className="underline text-sm text-gray-600"
+              className="underline text-sm text-slate-400"
             >
               https://github.com/wyattjoh/stream-timings
             </a>
@@ -107,49 +99,60 @@ export default function Page() {
         <p>
           This tool generates stream timing profiles for a given URL. It does
           this by making a request to the URL and then parsing the stream
-          timings from the server. By configuring the compression, the request
-          will be made with the given compression algorithm via the{" "}
-          <code className="bg-slate-100 p-1">Accept-Encoding</code> header.
+          timings from the server.
         </p>
         <form
-          className="flex flex-col space-y-2 w-full"
+          className="flex flex-col space-y-4 w-full"
           onSubmit={form.handleSubmit(onSubmit)}
         >
-          <div className="flex space-x-2">
-            <div className="flex-grow flex flex-col space-y-2">
+          <div className="space-y-2">
+            <label
+              htmlFor="url"
+              className="text-xs text-gray-700 dark:text-slate-400"
+            >
+              Request URL
+            </label>
+            <div className="flex-grow flex space-x-2">
               <input
                 type="url"
+                id="url"
                 placeholder="URL"
-                className="border p-2 text-sm rounded-md dark:text-slate-800"
+                defaultValue={defaultValues.url}
+                className="border p-2 text-sm dark:text-slate-800  flex-grow"
                 {...form.register("url")}
               />
-              <FieldError message={form.formState.errors.url?.message} />
+              <button
+                type="submit"
+                className="px-3 py-2 font-semibold text-sm shadow text-white bg-indigo-500 hover:bg-indigo-400 aria-disabled:bg-gray-400 aria-disabled:cursor-not-allowed"
+                aria-disabled={loading}
+              >
+                {loading ? "Profiling..." : "Profile URL"}
+              </button>
             </div>
-            <button
-              type="submit"
-              className="px-3 py-2 font-semibold text-sm shadow rounded-md text-white bg-indigo-500 hover:bg-indigo-400 aria-disabled:bg-gray-400 aria-disabled:cursor-not-allowed"
-              aria-disabled={loading}
-            >
-              {loading ? "Profiling..." : "Profile URL"}
-            </button>
+            <FieldError message={form.formState.errors.url?.message} />
           </div>
-          <div className="p-2 text-xs flex space-x-2 items-center">
-            <label className="" htmlFor="compress">
-              Compression
-            </label>
-            <select
-              className="p-2 rounded-md bg-slate-100 hover:bg-slate-200"
-              {...form.register("compress")}
-            >
-              <option value="">None</option>
-              <option value="gzip">gzip</option>
-              <option value="br">brotli</option>
-            </select>
+          <div className="space-y-2">
+            <div className="text-xs text-gray-700 dark:text-slate-400">
+              Headers
+            </div>
+            <div className="text-xs flex space-x-2 items-center bg-slate-100 dark:bg-slate-900 p-2">
+              <label htmlFor="compress">Accept-Encoding:</label>
+              <select
+                id="compress"
+                className="p-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-200"
+                defaultValue={defaultValues.compress}
+                {...form.register("compress")}
+              >
+                <option value="*">*</option>
+                <option value="gzip">gzip</option>
+                <option value="br">br</option>
+              </select>
+            </div>
           </div>
         </form>
         {error && <div className="text-red-500">{error}</div>}
       </div>
-      <div className="flex-grow bg-slate-200 border-t-2 border-slate-300">
+      <div className="flex-grow bg-slate-200 dark:bg-slate-900 border-t-2 border-slate-300 dark:border-slate-600">
         <div className="max-w-[800px] mx-auto space-y-4 my-6">
           {reports.length > 0 && <ReportSummary reports={reports} />}
           {reports.map((report, index) => {
@@ -204,7 +207,7 @@ function ReportSummary({ reports }: { reports: StreamTimingReport[] }) {
   }, [reports]);
 
   return (
-    <div className="grid md:grid-cols-3 bg-gray-600 text-gray-200 p-3 rounded-md text-sm">
+    <div className="grid md:grid-cols-3 bg-slate-800 text-gray-200 p-3 text-sm border dark:border-slate-600">
       <div>
         <span className="text-indigo-300">End of Headers</span>:{" "}
         {summary.headers !== null ? (
@@ -238,7 +241,7 @@ const ReportName: Record<StreamTimingReport["type"], string> = {
 
 function Report({ report }: { report: StreamTimingReport }) {
   return (
-    <div className="mb-2 border-y bg-white md:border dark:md:border-slate-600 dark:bg-slate-700 md:rounded-md p-2 space-y-2 md:shadow-sm">
+    <div className="mb-2 border-y bg-white md:border dark:md:border-slate-600 dark:bg-slate-800 md:p-2 space-y-2 md:shadow-sm">
       <div className="grid md:grid-cols-3">
         <span>{ReportName[report.type]}</span>
         <span>
@@ -264,8 +267,8 @@ function ReportDetail({ report }: { report: StreamTimingReport }) {
 
   const className =
     report.type !== "error"
-      ? "text-xs text-gray-200 bg-gray-600 p-2 rounded-md"
-      : "text-sm text-white bg-red-600 p-2 rounded-md";
+      ? "text-xs text-gray-200 bg-slate-800 dark:bg-slate-900 p-2"
+      : "text-sm text-white bg-red-600 p-2";
 
   if (report.type === "start") {
     return (
