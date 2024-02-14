@@ -27,13 +27,32 @@ class Reporter {
   }
 }
 
+type MeasureOptions = {
+  compress?: "gzip" | "br";
+};
+
 export async function measure(
-  url: string
+  url: string,
+  options?: MeasureOptions
 ): Promise<ReadableStream<Uint8Array>> {
   const reporter = new Reporter();
 
+  const init: RequestInit = {
+    headers: {
+      // If the user has requested that the response be compressed, set the
+      // Accept-Encoding header to the given value.
+      "Accept-Encoding": options?.compress ? options.compress : "identity",
+    },
+  };
+
   // Start the underling fetch to the given URL.
-  const res = await fetch(url);
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch (err) {
+    throw new Error("Could not fetch", { cause: err });
+  }
+
   if (!res.body) {
     throw new Error("No body found in response");
   }

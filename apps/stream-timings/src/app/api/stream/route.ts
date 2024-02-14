@@ -7,14 +7,17 @@ import {
 
 const schema = z.object({
   url: z.string().min(1).url(),
+  compress: z.enum(["gzip", "br"]).optional(),
 });
+
+export type RequestBody = z.infer<typeof schema>;
 
 export async function POST(req: Request): Promise<Response> {
   try {
-    const { url } = schema.parse(await req.json());
+    const { url, compress } = schema.parse(await req.json());
 
     // Measure the stream timing for the given URL.
-    const stream = await measure(url);
+    const stream = await measure(url, { compress });
 
     return new Response(stream, {
       status: 200,
