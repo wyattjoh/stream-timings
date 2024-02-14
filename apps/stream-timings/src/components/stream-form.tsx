@@ -65,11 +65,16 @@ export function StreamForm({ setReports }: Props) {
             const lastIndexOf = buffer.lastIndexOf("\r\n");
             if (lastIndexOf === -1) return;
 
-            const parsed = decode(buffer.slice(0, lastIndexOf));
+            const slice = buffer.slice(0, lastIndexOf).trim();
+            if (slice.length === 0) return;
+
+            const parsed = decode(slice);
             if (parsed.length === 0) {
-              throw new Error("A stream timing report could not be parsed");
+              throw new Error(
+                "A stream timing report could not be parsed: " + slice
+              );
             }
-            buffer = buffer.slice(lastIndexOf + 1);
+            buffer = buffer.slice(lastIndexOf + 2);
 
             setReports((prev) => prev.concat(parsed));
           },
@@ -78,7 +83,9 @@ export function StreamForm({ setReports }: Props) {
 
             const parsed = decode(buffer);
             if (parsed.length === 0) {
-              throw new Error("A stream timing report could not be parsed");
+              throw new Error(
+                "A stream timing report could not be parsed: " + buffer
+              );
             }
 
             setReports((prev) => prev.concat(parsed));
