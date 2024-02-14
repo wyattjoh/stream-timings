@@ -41,6 +41,9 @@ importers:
       react-hook-form:
         specifier: ^7.50.1
         version: 7.50.1(react@18.2.0)
+      tailwind-merge:
+        specifier: ^2.2.1
+        version: 2.2.1
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -124,7 +127,6 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       regenerator-runtime: 0.14.1
-    dev: true
 
   /@effect/schema@0.56.1(effect@2.0.0-next.62)(fast-check@3.15.0):
     resolution: {integrity: sha512-cfEyHLXPdzSKzJU/yYrPjFd0iVHPydh+NT0sgTe4bzXbcvOsKZuvQ86cAAwXN7lxY0N5cPes9ACxUxTdkEaNlw==}
@@ -2971,7 +2973,6 @@ packages:
 
   /regenerator-runtime@0.14.1:
     resolution: {integrity: sha512-dYnhHh0nJoMfnkZs6GmmhFknAGRrLznOu5nc9ML+EJxGvrx6H7teuevqVqCuPcPK//3eDrrjQhehXVx9cnkGdw==}
-    dev: true
 
   /regexp.prototype.flags@1.5.1:
     resolution: {integrity: sha512-sy6TXMN+hnP/wMy+ISxg3krXx7BAtWVO4UouuCN/ziM9UEne0euamVNafDfvC83bRNr95y0V5iijeDQFUNpvrg==}
@@ -3347,6 +3348,12 @@ packages:
     transitivePeerDependencies:
       - typescript
     dev: true
+
+  /tailwind-merge@2.2.1:
+    resolution: {integrity: sha512-o+2GTLkthfa5YUt4JxPfzMIpQzZ3adD1vLVkvKE1Twl9UAhGsEbIZhHHZVRttyW177S8PDJI3bTQNaebyofK3Q==}
+    dependencies:
+      '@babel/runtime': 7.23.9
+    dev: false
 
   /tailwindcss@3.4.1:
     resolution: {integrity: sha512-qAYmXRfk3ENzuPBakNK0SRrUDipP8NQnEY6772uDhflcQz5EhRdD7JNZxyrFHVQNCwULPBn6FNPp9brpO7ctcA==}
