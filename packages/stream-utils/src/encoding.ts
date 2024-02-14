@@ -4,7 +4,7 @@ export function encode(report: StreamTimingReport): string {
   return (
     JSON.stringify(report) +
     // Add a newline to separate each report (newline delimited JSON).
-    "\n"
+    "\r\n"
   );
 }
 
@@ -12,7 +12,7 @@ export function decode(chunk: string): StreamTimingReport[] {
   // Split the chunk by newline, we may be getting multiple JSON
   // objects.
   const chunks = chunk
-    .split("\n")
+    .split("\r\n")
     .map((c) => c.trim())
     .filter((c) => c.length > 0);
 

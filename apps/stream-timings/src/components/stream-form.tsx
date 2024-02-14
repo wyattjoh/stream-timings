@@ -56,10 +56,30 @@ export function StreamForm({ setReports }: Props) {
         if (!res.body) return;
 
         const decoder = new TextDecoderStream();
+        let buffer = "";
         const writer = new WritableStream<string>({
           write(chunk) {
-            const parsed = decode(chunk);
-            if (parsed.length === 0) return;
+            buffer += chunk;
+
+            // If the buffer has a "\n" in it, then we can parse it.
+            const lastIndexOf = buffer.lastIndexOf("\r\n");
+            if (lastIndexOf === -1) return;
+
+            const parsed = decode(buffer.slice(0, lastIndexOf));
+            if (parsed.length === 0) {
+              throw new Error("A stream timing report could not be parsed");
+            }
+            buffer = buffer.slice(lastIndexOf + 1);
+
+            setReports((prev) => prev.concat(parsed));
+          },
+          close() {
+            if (buffer.length === 0) return;
+
+            const parsed = decode(buffer);
+            if (parsed.length === 0) {
+              throw new Error("A stream timing report could not be parsed");
+            }
 
             setReports((prev) => prev.concat(parsed));
           },
